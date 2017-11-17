@@ -1076,7 +1076,7 @@ exports.getGuildColor = async guild => {
   try {
     return new Promise((resolve, reject) => {
       // Use smallest size (16p) to get the fastest result
-      pixelAverage(guild.iconURL({ format: 16 }), (err, avgs) => {
+      pixelAverage(guild.iconURL({ size: 16 }), (err, avgs) => {
         if (err) {
           return reject(err)
         }
