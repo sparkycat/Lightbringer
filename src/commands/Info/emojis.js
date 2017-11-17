@@ -38,7 +38,7 @@ exports.run = async (bot, msg, args) => {
         {
           author: {
             name: `Emojis of ${guild.name} [${emojis.size}]`,
-            icon: guild.iconURL
+            icon: guild.iconURL({ format: 2048 })
           },
           color
         }

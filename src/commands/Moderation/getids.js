@@ -10,7 +10,7 @@ exports.run = async (bot, msg, args) => {
     }
   }
 
-  let msgs = await channel.fetchMessages({
+  let msgs = await channel.messages.fetch({
     limit: amount - 1,
     before: msg.id
   })

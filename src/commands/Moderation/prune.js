@@ -1,7 +1,7 @@
 exports.run = async (bot, msg, args) => {
   const count = parseInt(args[0]) || 1
 
-  let messages = await msg.channel.fetchMessages({
+  let messages = await msg.channel.messages.fetch({
     limit: Math.min(count, 100),
     before: msg.id
   })

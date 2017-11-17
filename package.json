@@ -1,6 +1,6 @@
 {
   "name": "lightbringer",
-  "version": "1.3.0",
+  "version": "1.3.0-discord.js-master",
   "description": "Yet another Discord self-bot written with Discord.js",
   "author": "",
   "license": "MIT",
@@ -9,11 +9,11 @@
   "main": "src/bot.js",
   "scripts": {
     "start": "node src/bot.js",
-    "background": "screen -dmS lb node src/bot.js",
-    "pm2": "pm2 start --name lb src/bot.js"
+    "background": "screen -dmS lb_djs_m node src/bot.js",
+    "pm2": "pm2 start --name lb_djs_m src/bot.js"
   },
   "engines": {
-    "node": ">=7.6.0"
+    "node": ">=8.0.0"
   },
   "standard": {
     "globals": [
@@ -29,7 +29,7 @@
     "cheerio": "^0.22.0",
     "common-tags": "^1.4.0",
     "didyoumean2": "^1.2.0",
-    "discord.js": "^11.2.1",
+    "discord.js": "hydrabolt/discord.js#8237bc054ce2d705ea5432dfbcf07c4fbd452d1a",
     "emoji-regex": "^6.5.1",
     "encodeurl": "^1.0.1",
     "figlet": "^1.2.0",

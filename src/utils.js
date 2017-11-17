@@ -127,12 +127,12 @@ exports.embed = (title = '', description = '', fields = [], options = {}) => {
   }
   */
 
-  const embed = new Discord.RichEmbed({ fields, video: options.video || url })
+  const embed = new Discord.MessageEmbed({ fields, video: options.video || url })
     .setTitle(title)
     .setColor(color)
     .setDescription(description)
     .setImage(options.image || url)
-    .setFooter(footer, options.avatarFooter ? bot.user.avatarURL : (options.footerIcon || ''))
+    .setFooter(footer, options.avatarFooter ? bot.user.displayAvatarURL({ size: 2048 }) : (options.footerIcon || ''))
     .setAuthor(author.name, author.icon, author.url)
     .setThumbnail(options.thumbnail || '')
 
@@ -536,7 +536,7 @@ exports.getMsg = async (channel, msgId, curMsg) => {
 
   if (!foundMsg && curMsg) {
     try {
-      const msgs = await channel.fetchMessages({
+      const msgs = await channel.messages.fetch({
         limit: 1,
         around: msgId,
         before: curMsg
@@ -1075,7 +1075,8 @@ exports.getGuildColor = async guild => {
 
   try {
     return new Promise((resolve, reject) => {
-      pixelAverage(guild.iconURL, (err, avgs) => {
+      // Use smallest size (16p) to get the fastest result
+      pixelAverage(guild.iconURL({ format: 16 }), (err, avgs) => {
         if (err) {
           return reject(err)
         }

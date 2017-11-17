@@ -25,7 +25,7 @@ exports.run = async (bot, msg, args) => {
       if (!this._stats.get(OFF_ID)) {
         this._stats.set(OFF_ID, true)
         stopListening()
-        await bot.user.setGame()
+        await setPresenceAssets()
         this.nowPlaying = ''
         return msg.success('Disabled `Last.fm` listener.')
       } else {
@@ -46,6 +46,26 @@ exports.run = async (bot, msg, args) => {
     } else {
       return msg.error('That action is not valid!')
     }
+  }
+}
+
+const setPresenceAssets = async name => {
+  if (name) {
+    const activity = {
+      application: '381084833063108608',
+      name,
+      type: 'LISTENING',
+      url: `https://www.last.fm/user/${this.config.username}`,
+      details: 'Scrobbling to Last.fm',
+      state: 'Powered by Lightbringer',
+      assets: {
+        smallImage: '381087646577065984',
+        largeImage: '381086840985354243'
+      }
+    }
+    await bot.user.setPresence({ activity })
+  } else {
+    await bot.user.setPresence({ game: null })
   }
 }
 
@@ -100,7 +120,7 @@ const getRecentTrack = async () => {
   }
 
   try {
-    await bot.user.setGame(song ? `${song} | ♫ Last.fm` : undefined)
+    await setPresenceAssets(song ? `${song}` : undefined)
     this.nowPlaying = song
 
     if (bot.config.statusChannel) {

@@ -12,7 +12,7 @@ exports.run = async (bot, msg, args) => {
   const member = msg.guild ? msg.guild.member(user) : null
   const mention = get[1]
 
-  let avatarURL = user.displayAvatarURL
+  let avatarURL = user.displayAvatarURL({ size: 2048 })
 
   if (!avatarURL) {
     return msg.error('Could not get display avatar of the specified user!')

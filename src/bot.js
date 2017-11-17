@@ -266,7 +266,7 @@ const parseCommand = async msg => {
 
 const logMention = msg => {
   // Filter to check whether the bot's user/owner was mentioned
-  if (!((msg.guild && msg.isMemberMentioned(msg.guild.me)) || msg.isMentioned(bot.user))) {
+  if (!msg.mentions.has(bot.user)) {
     return
   }
 

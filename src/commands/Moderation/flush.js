@@ -5,7 +5,7 @@ exports.run = async (bot, msg, args) => {
     return msg.error('You do not have permission to flush messages by bots!')
   }
 
-  let messages = await msg.channel.fetchMessages({
+  let messages = await msg.channel.messages.fetch({
     limit: Math.min(count, 100),
     before: msg.id
   })
