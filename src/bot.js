@@ -225,7 +225,7 @@ const parseCommand = async msg => {
 
   if (stats.get('RELOADING')) {
     await msg.edit(`${consts.e}The bot is reloading modules!`)
-    return msg.delete(DELETE)
+    return msg.delete({ timeout: DELETE })
   }
 
   let args = split.slice(1)
@@ -246,7 +246,7 @@ const parseCommand = async msg => {
       return commands.execute(msg, command, args)
     } else {
       await msg.edit(`${consts.e}The shortcut \`${shortcut.name}\` is improperly set up!`)
-      return msg.delete(DELETE)
+      return msg.delete({ timeout: DELETE })
     }
   }
 
@@ -261,7 +261,7 @@ const parseCommand = async msg => {
     await msg.edit(`${consts.e}No commands were found that were similar to \`${prefix}${base}\``)
   }
 
-  return msg.delete(DELETE)
+  return msg.delete({ timeout: DELETE })
 }
 
 const logMention = msg => {

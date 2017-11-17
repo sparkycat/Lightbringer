@@ -34,7 +34,7 @@ exports.run = async (bot, msg, args) => {
         }
       )
     })
-    return msg.delete(60000)
+    return msg.delete({ timeout: 60000 })
   }
 
   const action = parsed.leftover[0]
@@ -92,7 +92,7 @@ exports.run = async (bot, msg, args) => {
     }
 
     await msg.edit(`**Name:** ${shortcut.name}\n${bot.utils.formatCode(shortcut.command, 'xl')}`)
-    return msg.delete(30000)
+    return msg.delete({ timeout: 30000 })
   } else {
     return msg.error('That action is not valid!')
   }

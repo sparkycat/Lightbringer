@@ -28,7 +28,7 @@ exports.run = async (bot, msg, args) => {
         )
       })
 
-      return msg.delete(60000)
+      return msg.delete({ timeout: 60000 })
     } else if (args.length) {
       const _args = args.join(' ')
       const guild = bot.utils.getGuild(_args, true)
@@ -55,7 +55,7 @@ exports.run = async (bot, msg, args) => {
     await msg.edit(`👌\u2000I will log mentions from guild: \`${name}\`!`)
   }
 
-  return msg.delete(8000)
+  return msg.delete({ timeout: 8000 })
 }
 
 exports.info = {

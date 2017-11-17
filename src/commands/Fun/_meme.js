@@ -71,7 +71,7 @@ exports.run = async (bot, msg, args) => {
         return `\`${meme.name}\``
       }).join(', '))
     })
-    return m.delete(30000)
+    return m.delete({ timeout: 30000 })
   }
 
   if (R_INFO.test(args[0])) {
@@ -95,7 +95,7 @@ exports.run = async (bot, msg, args) => {
     const m = await msg.channel.send({
       embed: bot.utils.embed(`\`${info.name}\``, `Styles: ${styles}`)
     })
-    return m.delete(15000)
+    return m.delete({ timeout: 15000 })
   }
 
   const input = args.join(' ')

@@ -45,7 +45,7 @@ exports.run = async (bot, msg, args) => {
         { inline: true }
       )
     })
-    return msg.delete(60000)
+    return msg.delete({ timeout: 60000 })
   } else if (R_ADD.test(action)) {
     if (parsed.leftover.length < 2) {
       return msg.error(`Usage: \`${bot.config.prefix}${this.info.name} add <name> [contents]\``)

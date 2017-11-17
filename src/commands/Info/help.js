@@ -64,7 +64,7 @@ exports.run = async (bot, msg, args) => {
         }
       )
     })
-    return msg.delete(60000)
+    return msg.delete({ timeout: 60000 })
   } else {
     const categories = bot.commands.categories().sort()
     await msg.edit(msg.content, {
@@ -87,7 +87,7 @@ exports.run = async (bot, msg, args) => {
         }
       )
     })
-    return msg.delete(30000)
+    return msg.delete({ timeout: 30000 })
   }
 }
 
