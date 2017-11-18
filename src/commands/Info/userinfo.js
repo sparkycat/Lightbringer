@@ -59,7 +59,7 @@ exports.run = async (bot, msg, args) => {
     })
   } else {
     const description = user.presence.activity
-      ? (activityType(user.presence.activity.type)) + ` **${user.presence.activity.name}**`
+      ? (bot.utils.formatActivityType(user.presence.activity.type)) + ` **${user.presence.activity.name}**`
       : `*${user === bot.user ? 'I am' : 'This user is'} not playing/streaming anything\u2026*`
 
     const nestedFields = [
@@ -151,20 +151,6 @@ exports.run = async (bot, msg, args) => {
       })
     })
   }
-}
-
-const activityType = type => {
-  if (typeof type !== 'string') {
-    type = Discord.Constants.ActivityTypes[type]
-  }
-
-  type = type.charAt(0) + type.slice(1).toLocaleLowerCase()
-
-  if (type === 'Listening') {
-    type += ' to'
-  }
-
-  return type
 }
 
 exports.info = {

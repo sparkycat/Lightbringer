@@ -86,10 +86,6 @@ exports.run = async (bot, msg) => {
             {
               name: 'Channels',
               value: bot.channels.size.toLocaleString()
-            },
-            {
-              name: 'Users',
-              value: bot.users.size.toLocaleString()
             }
           ]
         },
@@ -108,11 +104,13 @@ exports.run = async (bot, msg) => {
               name: 'discord.js',
               value: `[${require('discord.js').version}](https://github.com/hydrabolt/discord.js)`
             },
+            /*
             {
               name: 'bufferutil',
               value: `[${require('../../../node_modules/bufferutil/package.json').version}]` +
               '(https://github.com/websockets/bufferutil)'
             },
+            */
             {
               name: 'Node.js',
               value: `[${process.versions.node}](${process.release.sourceUrl})`
@@ -132,7 +130,7 @@ exports.run = async (bot, msg) => {
           url: GIT
         },
         color: '#ff0000',
-        footer: 'Ps. "Users" is the amount of users cached by the bot'
+        footer: `Ps. Currently caching ${bot.users.size.toLocaleString()} users\u2026`
       }
     )
   })

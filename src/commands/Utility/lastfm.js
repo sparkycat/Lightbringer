@@ -25,7 +25,7 @@ exports.run = async (bot, msg, args) => {
       if (!this._stats.get(OFF_ID)) {
         this._stats.set(OFF_ID, true)
         stopListening()
-        await setPresenceAssets()
+        await bot.user.setPresence({ activity: null })
         this.nowPlaying = ''
         return msg.success('Disabled `Last.fm` listener.')
       } else {
@@ -49,24 +49,23 @@ exports.run = async (bot, msg, args) => {
   }
 }
 
-const setPresenceAssets = async name => {
-  if (name) {
-    const activity = {
+const setPresenceAssets = async (artist, trackName, song) => {
+  await bot.user.setPresence({
+    activity: {
       application: '381084833063108608',
-      name,
+      name: song,
       type: 'LISTENING',
-      url: `https://www.last.fm/user/${this.config.username}`,
-      details: 'Scrobbling to Last.fm',
-      state: 'Powered by Lightbringer',
+      // url: `https://www.last.fm/user/${this.config.username}`,
+      details: trackName,
+      state: artist,
       assets: {
-        smallImage: '381087646577065984',
-        largeImage: '381086840985354243'
+        largeImage: '381417203024658432',
+        smallImage: '381417397057224704',
+        largeText: this.config.username,
+        smallText: 'Scrobbling to Last.fm: Powered by Lightbringer'
       }
     }
-    await bot.user.setPresence({ activity })
-  } else {
-    await bot.user.setPresence({ game: null })
-  }
+  })
 }
 
 const stopListening = () => {
@@ -107,12 +106,15 @@ const getRecentTrack = async () => {
   }
 
   const track = res.body.recenttracks.track[0]
+  let artist = ''
+  let trackName = ''
   let song = ''
 
   const nowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true'
   if (nowPlaying) {
-    const artist = typeof track.artist === 'object' ? track.artist['#text'] : track.artist
-    song = `${artist} - ${track.name}`
+    artist = typeof track.artist === 'object' ? track.artist['#text'] : track.artist
+    trackName = track.name
+    song = `${artist} - ${trackName}`
   }
 
   if (this.nowPlaying === song) {
@@ -120,14 +122,22 @@ const getRecentTrack = async () => {
   }
 
   try {
-    await setPresenceAssets(song ? `${song}` : undefined)
-    this.nowPlaying = song
+    let statusChannel = bot.config.statusChannel ? bot.channels.get(bot.config.statusChannel) : null
 
-    if (bot.config.statusChannel) {
-      await bot.channels.get(bot.config.statusChannel).send(`🎵\u2000${song
-        ? `\`Last.fm\`: ${song}`
-        : 'Cleared `Last.fm` status message!'}`
-      )
+    if (!artist || !trackName || !song) {
+      await bot.user.setPresence({ activity: null })
+      this.nowPlaying = ''
+      if (statusChannel) {
+        await statusChannel.send('🎵\u2000Cleared `Last.fm` status message!')
+      }
+    } else {
+      // I could have made setPresenceAssets() to build its
+      // own song variable, but whatever
+      await setPresenceAssets(artist, trackName, song)
+      this.nowPlaying = song
+      if (statusChannel) {
+        await statusChannel.send(`🎵\u2000\`Last.fm\`: ${song}`)
+      }
     }
   } catch (err) {
     console.warn(`[lastfm] ${err}`)

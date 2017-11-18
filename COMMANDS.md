@@ -255,10 +255,10 @@
 *Description:* `Reloads all modules (or optionally reload "utils" or "consts")`  
 *Usage:* `reload [utils|consts]`  
 *Aliases:* `r`  
-### `setgame`  
-*Description:* `Sets your game (shows for other people)`  
-*Usage:* `setgame <game>`  
-*Aliases:* `setactivity`  
+### `setactivity`  
+*Description:* `Sets your activity (can only be seen by other people)`  
+*Usage:* `setactivity <activity>`  
+*Aliases:* `setgame`  
 ### `shortcuts`  
 *Description:* `Controls or lists your shortcuts`  
 *Usage:* `shortcuts [<create> <id> <commands>|<delete|info> <id>]`  

@@ -1150,3 +1150,17 @@ exports.capitalizeFirstLetter = input => {
 exports.sleep = duration => {
   return new Promise(resolve => setTimeout(() => resolve(), duration))
 }
+
+exports.formatActivityType = type => {
+  if (typeof type !== 'string') {
+    type = Discord.Constants.ActivityTypes[type]
+  }
+
+  type = type.charAt(0) + type.slice(1).toLocaleLowerCase()
+
+  if (type === 'Listening') {
+    type += ' to'
+  }
+
+  return type
+}

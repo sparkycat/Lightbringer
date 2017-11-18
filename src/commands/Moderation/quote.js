@@ -61,7 +61,7 @@ exports.run = async (bot, msg, args, auto) => {
         options.image = a.url
       }
 
-      return { value: `•\u2000[${a.filename}](${a.url}) - ${filesize(a.filesize)}` }
+      return { value: `•\u2000[${a.name}](${a.url}) - ${filesize(a.size)}` }
     })
 
     if (attachments.length) {
