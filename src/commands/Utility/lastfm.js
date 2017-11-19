@@ -8,6 +8,7 @@ const R_TOGGLE = /^t(oggle)?$/i
 const R_CONFIG = /^c(onfig(uration)?)?$/i
 
 exports.nowPlaying = ''
+exports.totalScrobbles = 0
 
 exports.init = async bot => {
   this._stats = bot.managers.stats
@@ -61,7 +62,7 @@ const setPresenceAssets = async (artist, trackName, song) => {
       assets: {
         largeImage: '381417203024658432',
         smallImage: '381417397057224704',
-        largeText: this.config.username,
+        largeText: `${this.config.username}: ${this.totalScrobbles.toLocaleString()} scrobbles`,
         smallText: 'Scrobbling to Last.fm: Powered by Lightbringer'
       }
     }
@@ -104,6 +105,8 @@ const getRecentTrack = async () => {
   if (res.status !== 200 || !res.body || !res.body.recenttracks || !res.body.recenttracks.track || !res.body.recenttracks.track[0]) {
     return timeoutRecentTrack()
   }
+
+  this.totalScrobbles = parseInt(res.body.recenttracks['@attr'].total) || this.totalScrobbles
 
   const track = res.body.recenttracks.track[0]
   let artist = ''
