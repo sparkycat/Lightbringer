@@ -533,15 +533,15 @@ didyoumean2@^1.2.0:
     leven "^2.0.0"
     lodash "^4.17.2"
 
-discord.js@hydrabolt/discord.js#8237bc054ce2d705ea5432dfbcf07c4fbd452d1a:
+discord.js@hydrabolt/discord.js#f13c6d0768f50117baf28e44fc1836497e7e9782:
   version "12.0.0-dev"
-  resolved "https://codeload.github.com/hydrabolt/discord.js/tar.gz/8237bc054ce2d705ea5432dfbcf07c4fbd452d1a"
+  resolved "https://codeload.github.com/hydrabolt/discord.js/tar.gz/f13c6d0768f50117baf28e44fc1836497e7e9782"
   dependencies:
-    long "^3.2.0"
-    prism-media "^0.0.1"
-    snekfetch "^3.2.0"
+    pako "^1.0.0"
+    prism-media "^0.0.2"
+    snekfetch "^3.5.0"
     tweetnacl "^1.0.0"
-    ws "^3.0.0"
+    ws "^3.3.1"
 
 doctrine@1.5.0, doctrine@^1.2.2:
   version "1.5.0"
@@ -2144,7 +2144,7 @@ slice-ansi@0.0.4:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/slice-ansi/-/slice-ansi-0.0.4.tgz#edbf8903f66f7ce2f8eafd6ceed65e264c831b35"
 
-snekfetch@^3.0.0, snekfetch@^3.0.1, snekfetch@^3.5.8:
+snekfetch@^3.0.1, snekfetch@^3.5.0, snekfetch@^3.5.8:
   version "3.5.8"
   resolved "https://registry.yarnpkg.com/snekfetch/-/snekfetch-3.5.8.tgz#4d4e539f8435352105e74c392f62f66740a27d6c"
 
@@ -2483,7 +2483,7 @@ write@^0.2.1:
   dependencies:
     mkdirp "^0.5.1"
 
-ws@^3.0.0:
+ws@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/ws/-/ws-3.3.1.tgz#d97e34dee06a1190c61ac1e95f43cb60b78cf939"
   dependencies:

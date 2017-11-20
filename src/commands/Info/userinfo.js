@@ -24,7 +24,7 @@ exports.run = async (bot, msg, args) => {
     profile = await user.fetchProfile()
   } catch (err) {}
 
-  const avatarURL = user.displayAvatarURL({ size: 2048 })
+  const avatarURL = user.displayAvatarURL({ size: 128 })
   if (parsed.options.m) {
     if (user.bot) {
       return msg.error('Can not get mutual guilds information from bot accounts!')

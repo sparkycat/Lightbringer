@@ -132,7 +132,7 @@ exports.embed = (title = '', description = '', fields = [], options = {}) => {
     .setColor(color)
     .setDescription(description)
     .setImage(options.image || url)
-    .setFooter(footer, options.avatarFooter ? bot.user.displayAvatarURL({ size: 2048 }) : (options.footerIcon || ''))
+    .setFooter(footer, options.avatarFooter ? bot.user.displayAvatarURL({ size: 128 }) : (options.footerIcon || ''))
     .setAuthor(author.name, author.icon, author.url)
     .setThumbnail(options.thumbnail || '')
 
@@ -1076,7 +1076,7 @@ exports.getGuildColor = async guild => {
   try {
     return new Promise((resolve, reject) => {
       // Use smallest size (16p) to get the fastest result
-      pixelAverage(guild.iconURL({ size: 16 }), (err, avgs) => {
+      pixelAverage(guild.iconURL({ size: 16, format: 'png' }), (err, avgs) => {
         if (err) {
           return reject(err)
         }

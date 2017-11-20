@@ -18,7 +18,7 @@ exports.run = async (bot, msg, args, auto) => {
       m = await bot.utils.getMsg(channel, parsed.leftover[0], msg.id)
     }
 
-    const avatarURL = m.author.displayAvatarURL({ size: 2048 })
+    const avatarURL = m.author.displayAvatarURL({ size: 128 })
     const options = {
       color: m.member ? m.member.displayColor : 0,
       timestamp: m.editedTimestamp || m.createdTimestamp,

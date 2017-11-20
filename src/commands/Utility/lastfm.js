@@ -6,6 +6,7 @@ const DELAY = 7500
 
 const R_TOGGLE = /^t(oggle)?$/i
 const R_CONFIG = /^c(onfig(uration)?)?$/i
+const R_RICH = /^r(ich)?$/i
 
 exports.nowPlaying = ''
 exports.totalScrobbles = 0
@@ -35,14 +36,26 @@ exports.run = async (bot, msg, args) => {
         return msg.success('Enabled `Last.fm` listener!')
       }
     } else if (R_CONFIG.test(action)) {
-      const apiKey = args[1]
-      const username = args[2]
-
-      if (!apiKey || !username) {
+      if (args.length < 3) {
         return msg.error(`Usage: \`${bot.config.prefix}${this.info.name} config <apiKey> <username>\``)
       }
 
-      bot.managers.config.set(this.info.name, { apiKey, username })
+      this.config.apiKey = args[1]
+      this.config.username = args[2]
+      bot.managers.config.set(this.info.name, this.config)
+      return msg.success('Configuration saved!')
+    } else if (R_RICH.test(action)) {
+      if (args.length < 4) {
+        // lblastfm rich 381084833063108608 381417203024658432 382111360676528128
+        return msg.error(`Usage: \`${bot.config.prefix}${this.info.name} rich <client id> <large image id> <small image id>\``)
+      }
+
+      this.config.rich = {
+        clientId: args[1],
+        largeImageId: args[2],
+        smallImageId: args[3]
+      }
+      bot.managers.config.set(this.info.name, this.config)
       return msg.success('Configuration saved!')
     } else {
       return msg.error('That action is not valid!')
@@ -51,22 +64,30 @@ exports.run = async (bot, msg, args) => {
 }
 
 const setPresenceAssets = async (artist, trackName, song) => {
-  await bot.user.setPresence({
-    activity: {
-      application: '381084833063108608',
-      name: song,
-      type: 'LISTENING',
-      // url: `https://www.last.fm/user/${this.config.username}`,
-      details: trackName,
-      state: artist,
-      assets: {
-        largeImage: '381417203024658432',
-        smallImage: '381417397057224704',
-        largeText: `${this.config.username}: ${this.totalScrobbles.toLocaleString()} scrobbles`,
-        smallText: 'Scrobbling to Last.fm: Powered by Lightbringer'
+  const rich = this.config.rich
+  if (!rich || !rich.clientId || !rich.largeImageId || !rich.smallImageId) {
+    return bot.user.setPresence({
+      activity: {
+        name: `${song} | Last.fm`
       }
-    }
-  })
+    })
+  } else {
+    return bot.user.setPresence({
+      activity: {
+        application: rich.clientId,
+        name: song,
+        type: 'LISTENING',
+        details: trackName,
+        state: artist,
+        assets: {
+          largeImage: rich.largeImageId,
+          smallImage: rich.smallImageId,
+          largeText: `${this.totalScrobbles.toLocaleString()} scrobbles`,
+          smallText: `(ID: ${this.config.username}) Last.fm status for Discord powered by Lightbringer`
+        }
+      }
+    })
+  }
 }
 
 const stopListening = () => {
@@ -161,10 +182,11 @@ const startListening = () => {
 
 exports.info = {
   name: 'lastfm',
-  usage: 'lastfm [toggle|config <apiKey> <username>]',
-  description: 'Get currently playing song from Last.fm',
+  usage: 'lastfm [toggle|config <apiKey> <username>|rich <client id> <large image id> <small image id>]',
+  description: 'Manage last.fm scrobbling status updater',
   examples: [
     'lastfm toggle',
-    'lastfm config 12345678901234567890123456789012 MyUsername'
+    'lastfm config 12345678901234567890123456789012 MyUsername',
+    'lastfm rich 123456789012345678 123456789012345678 123456789012345678'
   ]
 }

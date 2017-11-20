@@ -228,8 +228,8 @@
 *Usage:* `haste [options] <text>`  
 *Aliases:* `hastebin`  
 ### `lastfm`  
-*Description:* `Get currently playing song from Last.fm`  
-*Usage:* `lastfm [toggle|config <apiKey> <username>]`  
+*Description:* `Manage last.fm scrobbling status updater`  
+*Usage:* `lastfm [toggle|config <apiKey> <username>|rich <client id> <large image id> <small image id>]`  
 ### `lmgtfy`  
 *Description:* `Links to LMGTFY with the given search text`  
 *Usage:* `lmgtfy [search text]`  

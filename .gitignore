@@ -1,11 +1,11 @@
 .DS_Store
 *.log
-node_modules/
+/node_modules/
 
 # Data files/folders
-data/
+/data/
 *.sqlite
-src/config.json
+/src/config.json
 /config.json
 
-.rsync_*
+.rsync_exclude
