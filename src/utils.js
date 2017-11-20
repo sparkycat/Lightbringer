@@ -571,11 +571,15 @@ const formatFoundList = (collection, props, name) => {
     `${isMoreThanMax ? `, and ${leftover} more\u2026` : ''}`))
 }
 
-exports.getGuildMember = (guild, keyword, fallback, suppress) => {
+exports.getGuildMember = async (guild, keyword, fallback, suppress) => {
   if (keyword) {
     if (!(guild instanceof Discord.Guild)) {
       throw new Error('An instance of Discord.Guild is required!')
     }
+
+    // It's rather harsh to fetch members
+    // everytime getGuildMember() is called
+    await guild.members.fetch()
 
     keyword = keyword.trim()
 
@@ -624,10 +628,10 @@ exports.getGuildMember = (guild, keyword, fallback, suppress) => {
   }
 }
 
-exports.getUser = (guild, keyword, fallback) => {
+exports.getUser = async (guild, keyword, fallback) => {
   if (keyword) {
     if (guild) {
-      const member = this.getGuildMember(guild, keyword, null, true)
+      const member = await this.getGuildMember(guild, keyword, null, true)
       if (member) {
         return [member[0].user, member[1]]
       }
@@ -817,30 +821,6 @@ exports.getHostName = url => {
   }
 
   return false
-}
-
-exports.fetchGuildMembers = async (guild, cache = false) => {
-  if (!(guild instanceof Discord.Guild)) {
-    throw new Error('An instance of Discord.Guild is required!')
-  }
-
-  if (cache) {
-    return { guild, time: '' }
-  }
-
-  const beginTime = process.hrtime()
-  try {
-    const g = await guild.fetchMembers()
-    const elapsedTime = process.hrtime(beginTime)
-    const elapsedTimeNs = elapsedTime[0] * 1e9 + elapsedTime[1]
-    return {
-      guild: g,
-      time: this.formatTimeNs(elapsedTimeNs),
-      ns: elapsedTimeNs
-    }
-  } catch (err) {
-    throw err
-  }
 }
 
 const pasteName = () => {

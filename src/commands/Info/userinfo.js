@@ -8,7 +8,9 @@ exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['m'])
   const keyword = parsed.leftover.join(' ')
 
-  const get = bot.utils.getUser(msg.guild, keyword, msg.author)
+  await msg.edit(`${consts.p}Fetching information\u2026`)
+
+  const get = await bot.utils.getUser(msg.guild, keyword, msg.author).catch(err => msg.error(err, 16000))
   const user = get[0]
   const member = msg.guild ? msg.guild.member(user) : null
   const mention = get[1]
@@ -17,7 +19,6 @@ exports.run = async (bot, msg, args) => {
     return msg.error(`Use \`${bot.config.prefix}guilds\` command to if you want to list your own guilds!`)
   }
 
-  await msg.edit(`${consts.p}Fetching ${mention ? `${user}'s ` : ''}profile\u2026`)
   let profile = {}
   try {
     profile = await user.fetchProfile()
@@ -59,7 +60,7 @@ exports.run = async (bot, msg, args) => {
   } else {
     const description = user.presence.activity
       ? (bot.utils.formatActivityType(user.presence.activity.type)) + ` **${user.presence.activity.name}**`
-      : `*${user === bot.user ? 'I am' : 'This user is'} not playing/streaming anything\u2026*`
+      : `*${user === bot.user ? 'I don\'t have' : 'This user desn\'t have'} activity message\u2026*`
 
     const nestedFields = [
       {

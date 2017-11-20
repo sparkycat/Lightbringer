@@ -21,9 +21,12 @@ exports.run = async (bot, msg, args) => {
 
   const guild = parsed.options.f ? bot.utils.getGuild(parsed.options.f) : msg.guild
 
-  await msg.edit(`${consts.p}Fetching guild information\u2026`)
+  await msg.edit(`${consts.p}Fetching information\u2026`)
 
-  const res = await bot.utils.fetchGuildMembers(guild, !parsed.options.r)
+  if (parsed.options.r) {
+    await guild.members.fetch()
+  }
+
   const textChannels = guild.channels.filter(c => c.type === 'text')
   const voiceChannels = guild.channels.filter(c => c.type === 'voice')
   const iconURL = guild.iconURL({ size: 128 })
@@ -140,10 +143,6 @@ exports.run = async (bot, msg, args) => {
     )
   }
 
-  if (res.time && embed) {
-    embed.setFooter(`Time taken to re-fetch members: ${res.time}`)
-  }
-
   if (parsed.options.g && gists) {
     await msg.edit('🔄\u2000Uploading to GitHub Gists\u2026')
     const r = await bot.utils.gists(gists)
@@ -168,7 +167,7 @@ exports.info = {
     {
       name: '-r',
       usage: '-r',
-      description: 'Re-fetches all guild members (recommended with large guild)'
+      description: 'Re-fetches all guild members (use with large guild for accurate members info)'
     },
     {
       name: '-f',

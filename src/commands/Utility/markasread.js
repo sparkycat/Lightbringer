@@ -5,6 +5,10 @@ exports.run = async (bot, msg, args) => {
     await msg.edit('🔄\u2000Marking all guilds as read\u2026 (this may take a few seconds)')
     const guilds = bot.guilds.array()
     for (const g of guilds) {
+      if (g.muted) {
+        continue
+      }
+
       await g.acknowledge()
       await bot.utils.sleep(200)
     }
@@ -23,6 +27,6 @@ exports.run = async (bot, msg, args) => {
 exports.info = {
   name: 'markasread',
   usage: 'markasread [guild|all]',
-  description: 'Mark this guild, a certain guild or all guilds as read',
+  description: 'Mark this guild, a certain guild or all un-muted guilds as read',
   aliases: ['mar']
 }

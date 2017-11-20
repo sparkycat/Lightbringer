@@ -1,5 +1,5 @@
 const R_LIST = /^l(ist)?$/i
-const R_CONFIG = /^c(onfig(uration)?)?$/i
+const R_CONFIG = /^c(onf(ig(uration)?)?)?$/i
 
 const TYPES = {
   marks: {

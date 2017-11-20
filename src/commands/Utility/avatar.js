@@ -7,7 +7,7 @@ exports.run = async (bot, msg, args) => {
 
   const keyword = parsed.leftover.join(' ')
 
-  const get = bot.utils.getUser(msg.guild, keyword, msg.author)
+  const get = await bot.utils.getUser(msg.guild, keyword, msg.author).catch(err => msg.error(err, 16000))
   const user = get[0]
   const member = msg.guild ? msg.guild.member(user) : null
   const mention = get[1]

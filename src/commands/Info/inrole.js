@@ -19,9 +19,12 @@ exports.run = async (bot, msg, args) => {
   const role = get[0]
   const mention = get[1]
 
-  await msg.edit(`${consts.p}Fetching role information\u2026`)
+  await msg.edit(`${consts.p}Fetching information\u2026`)
 
-  const res = await bot.utils.fetchGuildMembers(guild, !parsed.options.r)
+  if (parsed.options.r) {
+    await guild.members.fetch()
+  }
+
   let members = role.members
 
   if (parsed.options.o) {
@@ -43,8 +46,7 @@ exports.run = async (bot, msg, args) => {
       bot.utils.formatCode(membersMap.join(', '), 'css'),
       [],
       {
-        color: role.hexColor,
-        footer: res.time ? `Time taken to re-fetch members: ${res.time}` : ''
+        color: role.hexColor
       }
     )
   })
