@@ -1,4 +1,3 @@
-const Discord = require('discord.js')
 const moment = require('moment')
 
 exports.run = async (bot, msg, args) => {
