@@ -261,7 +261,7 @@
 *Aliases:* `r`  
 ### `setactivity`  
 *Description:* `Sets your activity (can only be seen by other people)`  
-*Usage:* `setactivity <activity>`  
+*Usage:* `setactivity [options] <activity>`  
 *Aliases:* `setgame`  
 ### `shortcuts`  
 *Description:* `Controls or lists your shortcuts`  

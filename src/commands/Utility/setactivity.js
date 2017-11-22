@@ -67,7 +67,7 @@ exports.run = async (bot, msg, args) => {
 
 exports.info = {
   name: 'setactivity',
-  usage: 'setactivity <activity>',
+  usage: 'setactivity [options] <activity>',
   description: 'Sets your activity (can only be seen by other people)',
   aliases: ['setgame'],
   options: [
