@@ -1,4 +1,4 @@
-# Commands (80)  
+# Commands (81)  
   
 ## Fun – 32 commands  
 ### `8ball`  
@@ -115,14 +115,18 @@
 *Description:* `Weave an input text with a certain emoji`  
 *Usage:* `weave <emoji> <text>`  
   
-## Info – 9 commands  
+## Info – 10 commands  
+### `channelinfo`  
+*Description:* `Shows info of the specified channel`  
+*Usage:* `channelinfo [options] <channel name>`  
+*Aliases:* `channel`  
 ### `emojis`  
 *Description:* `Gets the emojis of the current guild`  
 *Usage:* `emojis [options]`  
 *Aliases:* `emoji`, `emote`, `emotes`  
 ### `guildinfo`  
 *Description:* `Shows info of the server you are in`  
-*Usage:* `guildinfo [options] [roles|members|channels]`  
+*Usage:* `guildinfo [options] [roles|members|channels|online]`  
 *Aliases:* `guild`, `server`, `serverinfo`  
 ### `help`  
 *Description:* `Shows you help for all commands or just a single command`  
@@ -130,7 +134,7 @@
 *Aliases:* `h`  
 ### `inrole`  
 *Description:* `Shows a list of members which have the specified role`  
-*Usage:* `inrole [-r] <role name>`  
+*Usage:* `inrole [options] <role name>`  
 ### `locate`  
 *Description:* `Gets the name of the guild that the emoji comes from`  
 *Usage:* `locate <emoji>`  
@@ -234,7 +238,7 @@
 *Description:* `Links to LMGTFY with the given search text`  
 *Usage:* `lmgtfy [search text]`  
 ### `markasread`  
-*Description:* `Mark this guild, a certain guild or all guilds as read`  
+*Description:* `Mark this guild, a certain guild or all un-muted guilds as read`  
 *Usage:* `markasread [guild|all]`  
 *Aliases:* `mar`  
 ### `math`  
