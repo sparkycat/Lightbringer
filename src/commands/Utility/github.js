@@ -41,7 +41,7 @@ exports.run = async (bot, msg, args) => {
       return msg.error('Could not connect to GitHub server!')
     }
 
-    if (res.body.items.length < 1) {
+    if (!res.body.items.length) {
       return msg.error(`${consts.e}No results found for '${args.join(' ')}'`)
     }
 

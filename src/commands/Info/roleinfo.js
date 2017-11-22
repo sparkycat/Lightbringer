@@ -3,7 +3,11 @@ const moment = require('moment')
 exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['r', 'f:'])
 
-  if (!parsed.options.f && !bot.utils.hasEmbedPermission(msg.channel)) {
+  if (!msg.guild && !parsed.options.f) {
+    return msg.error('This command must be used in a guild unless you specify a guild with the `-f` option!')
+  }
+
+  if (!bot.utils.hasEmbedPermission(msg.channel)) {
     return msg.error('No permission to use embed in this channel!')
   }
 
@@ -12,18 +16,34 @@ exports.run = async (bot, msg, args) => {
   }
 
   const keyword = parsed.leftover.join(' ')
-  const guild = parsed.options.f ? bot.utils.getGuild(parsed.options.f) : msg.guild
-  const get = bot.utils.getGuildRole(guild, keyword)
-  const role = get[0]
-  const mention = get[1]
 
-  await msg.edit(`${consts.p}Fetching role information\u2026`)
+  let guild = msg.guild
+  if (parsed.options.f) {
+    guild = bot.utils.getGuild(parsed.options.f)
+    try {
+      bot.utils.assertGetResult(guild, { name: 'guilds' })
+      guild = guild[0]
+    } catch (err) { return msg.error(err) }
+  }
 
-  const res = await bot.utils.fetchGuildMembers(guild, !parsed.options.r)
+  let role = bot.utils.getGuildRole(guild, keyword)
+  try {
+    bot.utils.assertGetResult(role, { name: 'roles' })
+    role = role[0]
+  } catch (err) { return msg.error(err) }
+
+  const mention = bot.utils.isKeywordMentionable(keyword, 1)
+
+  if (parsed.options.r) {
+    await msg.edit(`${consts.p}Fetching guild members\u2026`)
+    await guild.members.fetch()
+  }
+
   const color = hexToRgb(role.hexColor)
   const message = mention
     ? `Information of ${keyword}:`
     : `Information of the role which matched the keyword \`${keyword}\`:`
+
   return msg.edit(message, {
     embed: bot.utils.formatEmbed(`${role.name}`, `**Guild:** ${guild.name} (ID: ${guild.id})`,
       [
@@ -46,7 +66,7 @@ exports.run = async (bot, msg, args) => {
             {
               name: 'Members',
               value: `${role.members.size} – ${role.members.filter(m => {
-                return (m.user === bot.user ? bot.user.settings.status : m.user.presence.status) !== 'offline'
+                return (m.user.id === bot.user.id ? bot.user.settings.status : m.user.presence.status) !== 'offline'
               }).size} online`
             }
           ]
@@ -78,8 +98,7 @@ exports.run = async (bot, msg, args) => {
         }
       ],
       {
-        color: role.hexColor,
-        footer: res.time ? `Time taken to re-fetch members: ${res.time}` : ''
+        color: role.hexColor
       }
     )
   })

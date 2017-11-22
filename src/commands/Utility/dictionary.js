@@ -134,7 +134,7 @@ const beautify = (m, depth = 0) => {
   }
 
   if (!hasContent) {
-    // console.log(require('util').inspect(m))
+    console.log(require('util').inspect(m))
     return temp + '*This meaning may not have any content. Check your console\u2026*'
   }
 

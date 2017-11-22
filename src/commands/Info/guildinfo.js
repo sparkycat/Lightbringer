@@ -1,82 +1,166 @@
-const Discord = require('discord.js')
 const moment = require('moment')
 
-const verificationLevels = ['None', 'Low', 'Medium', '(╯°□°）╯︵ ┻━┻', '┻━┻ ﾐヽ(ಠ益ಠ)ノ彡┻━┻']
-const explicitContentFilters = ['No scan', 'Scan from members without a role', 'Scan from all members']
+const VERIFICATION_LEVELS = [
+  'None',
+  'Low (must have verified email)',
+  'Medium (registered on Discord for longer than 5 minutes)',
+  'High (a member of the server for longer than 10 minutes)',
+  'Insane (must have verified phone)'
+]
+
+const EXPLICIT_CONTENT_FILTERS = [
+  'No scan',
+  'Scan from members without a role',
+  'Scan from all members'
+]
+
+const CHANNEL_TYPES = {
+  category: 'C',
+  text: 'T',
+  voice: 'V'
+}
+
+const CHANNEL_PRIORITY = {
+  category: 2,
+  text: 0,
+  voice: 1
+}
+
+const NOTIFICATIONS = {
+  EVERYTHING: 'All messages',
+  MENTIONS: 'Only @mentions',
+  NOTHING: 'Nothing',
+  INHERIT: 'Inherit preference from parent'
+}
 
 const R_ROLES = /^r(oles)?$/i
 const R_MEMBERS = /^m(ember(s)?)?$|^u(ser(s)?)?$/i
 const R_CHANNELS = /^c(hannel(s)?)?$/i
+const R_ONLINE = /^o(nline)?$/i
 
 exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['r', 'f:', 'g'])
 
-  if (!(parsed.leftover.length && parsed.options.g) && !bot.utils.hasEmbedPermission(msg.channel)) {
+  if (!msg.guild && !parsed.options.f) {
+    return msg.error('This command must be used in a guild unless you specify a guild with the `-f` option!')
+  }
+
+  if (!bot.utils.hasEmbedPermission(msg.channel)) {
     return msg.error('No permission to use embed in this channel!')
   }
 
-  if (!msg.guild && !parsed.options.f) {
-    return msg.error('This command can only be used in a guild!')
+  let guild = msg.guild
+  if (parsed.options.f) {
+    guild = bot.utils.getGuild(parsed.options.f)
+    try {
+      bot.utils.assertGetResult(guild, { name: 'guilds' })
+      guild = guild[0]
+    } catch (err) { return msg.error(err) }
   }
 
-  const guild = parsed.options.f ? bot.utils.getGuild(parsed.options.f) : msg.guild
-
-  await msg.edit(`${consts.p}Fetching information\u2026`)
-
   if (parsed.options.r) {
+    await msg.edit(`${consts.p}Fetching guild members\u2026`)
     await guild.members.fetch()
   }
 
-  const textChannels = guild.channels.filter(c => c.type === 'text')
-  const voiceChannels = guild.channels.filter(c => c.type === 'voice')
-  const iconURL = guild.iconURL({ size: 128 })
-  const splashURL = guild.splashURL({ size: 128 })
+  const iconURL = guild.iconURL({ size: 256 })
+  const splashURL = guild.splashURL({ size: 2048 })
 
-  let gists, embed
+  let gists
+  let embed
+
   if (parsed.leftover.length) {
-    let title, delimeter, children
+    let title
+    let map
+    let code
+    let delimeter
+    let footer
 
-    const hasPerm = (c, perms) => c.permissionsFor(guild.me).has(perms)
-    const f = t => ` **\`[${t}]\`**`
-    const displayPerms = c => `${!hasPerm(c, 'SEND_MESSAGES') && c instanceof Discord.TextChannel ? f('NO_SEND') : ''}${!hasPerm(c, 'CONNECT') && c instanceof Discord.VoiceChannel ? f('NO_CONNECT') : ''}${!hasPerm(c, 'VIEW_CHANNEL') ? f('NO_VIEW') : ''}`
+    const channelSort = (a, b) => CHANNEL_PRIORITY[a.type] - CHANNEL_PRIORITY[b.type] || a.position - b.position
 
-    if (R_ROLES.test(parsed.leftover[0])) {
-      title = `Roles in ${guild.name} [${guild.roles.size}]`
-      children = guild.roles.sort((a, b) => b.position - a.position).map(r => r.name)
+    const formatMissingPerms = channel => {
+      let missing = []
+
+      if (!channel.permissionsFor(guild.me).has('VIEW_CHANNEL')) {
+        missing.push('#no-view')
+      }
+      if ((channel.type === 'text') && !channel.permissionsFor(guild.me).has('SEND_MESSAGES')) {
+        missing.push('#no-send')
+      }
+      if ((channel.type === 'voice') && !channel.permissionsFor(guild.me).has('CONNECT')) {
+        missing.push('#no-connect')
+      }
+
+      return missing.length ? ` ${missing.join(' ')}` : ''
+    }
+
+    const action = parsed.leftover[0]
+
+    if (R_ROLES.test(action)) {
+      title = `Roles in ${guild.name}`
+      map = guild.roles
+        .sort((a, b) => b.position - a.position)
+        .map(r => r.name)
       delimeter = ', '
-    } else if (R_MEMBERS.test(parsed.leftover[0])) {
-      title = `Members in ${guild.name} [${guild.memberCount}]`
-      children = guild.members.map(m => `${bot.utils.escapeMarkdown(m.user.tag)}${(m.user.bot ? ' **`[BOT]`**' : '')}`).sort()
+    } else if (R_MEMBERS.test(action)) {
+      title = `Members in ${guild.name}`
+      map = guild.members
+        .map(m => m.user.tag)
+        .sort((a, b) => a.localeCompare(b))
+      code = 'css'
       delimeter = ', '
-    } else if (R_CHANNELS.test(parsed.leftover[0])) {
-      title = `Channels in ${guild.name} [${guild.channels.size}]`
-      const sortPos = (a, b) => a.position - b.position
-      children = [].concat(
-        `**Text channels [${textChannels.size}]:**`,
-        textChannels.sort(sortPos).map(c => `•\u2000${c.name}${displayPerms(c)}`),
-        '\n',
-        `**Voice channels [${voiceChannels.size}]:**`,
-        voiceChannels.sort(sortPos).map(c => `•\u2000${c.name}${displayPerms(c)}`)
-      )
+    } else if (R_CHANNELS.test(action)) {
+      title = `Channels in ${guild.name}`
+      let ordered = []
+      guild.channels
+        .filter(c => !c.parentID)
+        .sort(channelSort)
+        .forEach(c => {
+          ordered.push(c)
+          if (c.children) {
+            const childrenArray = c.children
+              .sort(channelSort)
+              .array()
+            ordered = ordered.concat(childrenArray)
+          }
+        })
+      map = ordered
+        .map(c => `[${CHANNEL_TYPES[c.type]}] ${c.name}${formatMissingPerms(c)}`)
+      code = 'css'
       delimeter = '\n'
+      footer = 'Ps. C = Categories, T = Text and V = Voice'
+    } else if (R_ONLINE.test(action)) {
+      title = `Online members in ${guild.name}`
+      map = guild.members
+        .filter(m => (m.user.id === bot.user.id ? bot.user.settings.status : m.user.presence.status) !== 'offline')
+        .map(m => m.user.tag)
+        .sort((a, b) => a.localeCompare(b))
+      code = 'css'
+      delimeter = ', '
     } else {
       return msg.error('That action is not valid!')
     }
 
     if (parsed.options.g) {
-      gists = children.join('\n')
+      gists = map.join(delimeter)
     } else {
-      embed = bot.utils.formatLargeEmbed('', '', { delimeter, children }, {
+      embed = bot.utils.formatEmbed('', bot.utils.formatCode(map.join(delimeter), code), [], {
         author: {
-          name: title,
+          name: `${title} [${map.length}]`,
           icon: iconURL
-        }
+        },
+        footer,
+        truncate: false
       })
     }
   } else {
+    const text = guild.channels.filter(c => c.type === 'text')
+    const voice = guild.channels.filter(c => c.type === 'voice')
+    const category = guild.channels.filter(c => c.type === 'category')
     const online = guild.members.filter(m => {
-      return (m.user === bot.user ? bot.user.settings.status : m.user.presence.status) !== 'offline'
+      return (m.user.id === bot.user.id ? bot.user.settings.status : m.user.presence.status) !== 'offline'
     })
+
     const nestedFields = [
       {
         title: 'Guild Information',
@@ -99,11 +183,15 @@ exports.run = async (bot, msg, args) => {
           },
           {
             name: 'Verification',
-            value: verificationLevels[guild.verificationLevel]
+            value: VERIFICATION_LEVELS[guild.verificationLevel]
           },
           {
             name: 'Filter',
-            value: explicitContentFilters[guild.explicitContentFilter]
+            value: EXPLICIT_CONTENT_FILTERS[guild.explicitContentFilter]
+          },
+          {
+            name: 'System channel',
+            value: guild.systemChannel ? `${guild.systemChannel.name} (ID: ${guild.systemChannel.id})` : 'N/A'
           }
         ]
       },
@@ -112,7 +200,7 @@ exports.run = async (bot, msg, args) => {
         fields: [
           {
             name: 'Channels',
-            value: `${guild.channels.size} – ${textChannels.size} text & ${voiceChannels.size} voice`
+            value: `${guild.channels.size} – ${category.size} categor${category.size === 1 ? 'y' : 'ies'}, ${text.size} text and ${voice.size} voice`
           },
           {
             name: 'Members',
@@ -120,7 +208,24 @@ exports.run = async (bot, msg, args) => {
           },
           {
             name: 'Roles',
-            value: guild.roles.size
+            value: `${guild.roles.size} – ${guild.me.roles.size - 1} owned`
+          }
+        ]
+      },
+      {
+        title: 'Miscellaneous',
+        fields: [
+          {
+            name: 'Notifications',
+            value: NOTIFICATIONS[guild.messageNotifications]
+          },
+          {
+            name: 'Mobile push',
+            value: bot.utils.formatYesNo(guild.mobilePush)
+          },
+          {
+            name: 'Muted',
+            value: bot.utils.formatYesNo(guild.muted)
           }
         ]
       }
@@ -134,13 +239,14 @@ exports.run = async (bot, msg, args) => {
       })
     }
 
-    const myRoles = guild.me.roles.size - 1
-    embed = bot.utils.formatEmbed('', `_I have **${myRoles} role${myRoles !== 1 ? 's' : ''}** in this guild\u2026_`,
-      nestedFields, {
-        thumbnail: iconURL,
-        author: { name: guild.name, icon: iconURL }
-      }
-    )
+    embed = bot.utils.formatEmbed('', '', nestedFields, {
+      thumbnail: iconURL,
+      author: {
+        name: guild.name,
+        icon: iconURL
+      },
+      footer: `Ps. Currently caching ${guild.members.size.toLocaleString()} guild members\u2026`
+    })
   }
 
   if (parsed.options.g && gists) {
@@ -160,19 +266,19 @@ exports.run = async (bot, msg, args) => {
 
 exports.info = {
   name: 'guildinfo',
-  usage: 'guildinfo [options] [roles|members|channels]',
+  usage: 'guildinfo [options] [roles|members|channels|online]',
   description: 'Shows info of the server you are in',
   aliases: ['guild', 'server', 'serverinfo'],
   options: [
     {
       name: '-r',
       usage: '-r',
-      description: 'Re-fetches all guild members (use with large guild for accurate members info)'
+      description: 'Re-fetches all guild members (recommended with large guild)'
     },
     {
       name: '-f',
       usage: '-f <guild name>',
-      description: 'Uses a certain guild instead'
+      description: 'Displays information of a particular guild instead'
     },
     {
       name: '-g',

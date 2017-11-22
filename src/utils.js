@@ -5,6 +5,12 @@ const snekfetch = require('snekfetch')
 const emojiRegex = require('emoji-regex')()
 const pixelAverage = require('pixel-average')
 
+const R_USER = /^<@!?(\d+?)>$/
+const R_ROLE = /^<@&?(\d+?)>$/
+const R_CHANNEL = /^<#(\d+?)>$/
+const R_ID = /^\d+$/
+const R_USERTAG = /#\d{4}$/
+
 exports.guildColors = bot.storage('guild-colors')
 
 exports.randomSelection = choices => {
@@ -117,7 +123,7 @@ exports.embed = (title = '', description = '', fields = [], options = {}) => {
   }
 
   // Use maximum length for description
-  if (description.length > maxLength) {
+  if ((description.length > maxLength) && (options.truncate !== false)) {
     description = this.truncate(description, maxLength)
   }
 
@@ -132,7 +138,7 @@ exports.embed = (title = '', description = '', fields = [], options = {}) => {
     .setColor(color)
     .setDescription(description)
     .setImage(options.image || url)
-    .setFooter(footer, options.avatarFooter ? bot.user.displayAvatarURL({ size: 128 }) : (options.footerIcon || ''))
+    .setFooter(footer, options.avatarFooter ? bot.user.displayAvatarURL({ size: 256 }) : (options.footerIcon || ''))
     .setAuthor(author.name, author.icon, author.url)
     .setThumbnail(options.thumbnail || '')
 
@@ -193,7 +199,7 @@ exports.formatEmbed = (title = '', description = '', nestedFields, options = {})
     }
 
     const tmp = {
-      name: `${parentField.icon || '❯'}\u2000${parentField.title}`,
+      name: `${parentField.icon ? `\u2000${parentField.icon}` : ''}${parentField.title}`,
       value: parentField.fields.map(field => {
         let value = field.value !== undefined ? this.truncate(field.value.toString(), 1024) : ''
         let newField = `${field.name !== undefined ? `•\u2000${field.name ? `**${field.name}:** ` : ''}` : ''}${value}`
@@ -380,7 +386,7 @@ exports.sendLarge = async (channel, largeMessage, options = {}) => {
 }
 
 exports.playAnimation = async (msg, delay, list) => {
-  if (list.length < 1) {
+  if (!list.length) {
     return
   }
 
@@ -542,7 +548,7 @@ exports.getMsg = async (channel, msgId, curMsg) => {
         before: curMsg
       })
 
-      if (msgs.size < 1 || (msgId ? msgs.first().id !== msgId : false)) {
+      if (!msgs.size || (msgId ? msgs.first().id !== msgId : false)) {
         throw new Error('Message could not be fetched from the channel!')
       }
 
@@ -557,252 +563,209 @@ exports.getMsg = async (channel, msgId, curMsg) => {
   }
 }
 
-const formatFoundList = (collection, props, name) => {
-  const MAX = 20
-  const isMoreThanMax = collection.size > 20
-  const leftover = isMoreThanMax && collection.size - 20
+exports.formatFoundList = (list, props, options) => {
+  const MAX = options.max || 10
 
-  const array = collection.sort((a, b) => this.getProp(a, props).localeCompare(this.getProp(b, props))).array()
+  const array = list.map(i => {
+    return this.getProp(i, props)
+  }).sort((a, b) => {
+    return a.localeCompare(b)
+  })
+  const arrLen = array.length
+
   array.length = Math.min(MAX, array.length)
 
-  return new Error(`Found \`${collection.size}\` ${name}${collection.size !== 1 ? 's' : ''} with that keyword. ` +
-    'Please use a more specific keywords!\n' +
-    bot.utils.formatCode(`${array.map(i => this.getProp(i, props)).join(', ')}` +
-    `${isMoreThanMax ? `, and ${leftover} more\u2026` : ''}`))
+  const name = options.name || 'matches'
+
+  return `Multiple ${name} found, please be more specific:\n` +
+    bot.utils.formatCode(`${array.join(', ')}${arrLen > MAX ? `, and ${arrLen - MAX} more\u2026` : ''}`, 'css')
 }
 
-exports.getGuildMember = async (guild, keyword, fallback, suppress) => {
-  if (keyword) {
-    if (!(guild instanceof Discord.Guild)) {
-      throw new Error('An instance of Discord.Guild is required!')
-    }
+const getItemByRegex = (source, keyword, regex) => {
+  const exec = regex.exec(keyword)
+  if (exec) {
+    const get = source.get(exec[1])
+    if (get) return [get]
+  }
+}
 
-    // It's rather harsh to fetch members
-    // everytime getGuildMember() is called
-    await guild.members.fetch()
+const getItemById = (source, keyword, regex) => {
+  const test = regex.test(keyword)
+  if (test) {
+    const get = source.get(keyword)
+    if (get) return [get]
+  }
+}
 
-    keyword = keyword.trim()
-
-    const execMention = /^<@!?(\d+?)>$/.exec(keyword)
-    if (execMention) {
-      const get = guild.members.get(execMention[1])
-      if (get) {
-        // 2nd element in array is an indicator that the keyword was a mention
-        return [get, true]
+const getItemByProps = (source, keyword, regex, props) => {
+  if (!Array.isArray(props)) props = [props]
+  // If there is no regex, assume keyword
+  // does not have to be tested
+  const test = regex ? regex.test(keyword) : true
+  if (test) {
+    const find = source.find(i => {
+      for (const prop of props) {
+        if (this.getProp(i, prop) === keyword) {
+          return true
+        }
       }
-    }
-
-    const testId = /^\d+$/.test(keyword)
-    if (testId) {
-      const get = guild.members.get(keyword)
-      if (get) {
-        return [get, false]
-      }
-    }
-
-    const testTag = /#\d{4}$/.test(keyword)
-    if (testTag) {
-      const find = guild.members.find(m => m.user && m.user.tag === keyword)
-      if (find) {
-        return [find, false]
-      }
-    }
-
-    const regex = new RegExp(keyword, 'i')
-    const filter = guild.members.filter(m => {
-      return (m.nickname && regex.test(m.nickname)) || (m.user && m.user.username && regex.test(m.user.username))
     })
-    if (filter.size === 1) {
-      return [filter.first(), false]
-    } else if (filter.size !== 0) {
-      throw formatFoundList(filter, 'user.tag', 'guild member')
-    }
-  }
-
-  if (fallback && !keyword) {
-    return [fallback, false]
-  }
-
-  if (!suppress) {
-    throw new Error('Guild member with that keyword could not be found!')
+    if (find) return [find]
   }
 }
 
-exports.getUser = async (guild, keyword, fallback) => {
+const filterItemByProps = (source, keyword, props) => {
+  if (!Array.isArray(props)) props = [props]
+  const regex = new RegExp(keyword, 'i')
+  const filter = source.filterArray(i => {
+    for (const prop of props) {
+      if (regex.test(this.getProp(i, prop))) {
+        return true
+      }
+    }
+  })
+  if (filter.length) return filter
+}
+
+exports.isKeywordMentionable = (keyword, type = 0) => {
+  switch (type) {
+    case 0:
+      return R_USER.test(keyword)
+    case 1:
+      return R_ROLE.test(keyword)
+    case 2:
+      return R_CHANNEL.test(keyword)
+  }
+}
+
+exports.getGuildMember = (guild, keyword, fallback) => {
   if (keyword) {
-    if (guild) {
-      const member = await this.getGuildMember(guild, keyword, null, true)
-      if (member) {
-        return [member[0].user, member[1]]
-      }
+    const source = guild.members
+    const gets = [
+      () => getItemByRegex(source, keyword, R_USER),
+      () => getItemById(source, keyword, R_ID),
+      () => getItemByProps(source, keyword, R_USERTAG, 'user.tag'),
+      () => filterItemByProps(source, keyword, ['nickname', 'user.username'])
+    ]
+    for (const get of gets) {
+      const result = get()
+      if (result) return result
     }
-
-    keyword = keyword.trim()
-
-    const execMention = /^<@!?(\d+?)>$/.exec(keyword)
-    if (execMention) {
-      const get = bot.users.get(execMention[1])
-      if (get) {
-        // 2nd element in array is an indicator that the keyword was a mention
-        return [get, true]
-      }
-    }
-
-    const testId = /^\d+$/.test(keyword)
-    if (testId) {
-      const get = bot.users.get(keyword)
-      if (get) {
-        return [get, false]
-      }
-    }
-
-    const testTag = /#\d{4}$/.test(keyword)
-    if (testTag) {
-      const find = bot.users.find(u => u.tag === keyword)
-      if (find) {
-        return [find, false]
-      }
-    }
-
-    const regex = new RegExp(keyword, 'i')
-    const filter = bot.users.filter(u => u.username && regex.test(u.username))
-    if (filter.size === 1) {
-      return [filter.first(), false]
-    } else if (filter.size !== 0) {
-      throw formatFoundList(filter, 'tag', 'user')
-    }
+  } else if (fallback) {
+    return [fallback]
   }
+}
 
-  if (fallback && !keyword) {
-    return [fallback, false]
+exports.getUser = (keyword, fallback) => {
+  if (keyword) {
+    const source = bot.users
+    const gets = [
+      () => getItemByRegex(source, keyword, R_USER),
+      () => getItemById(source, keyword, R_ID),
+      () => getItemByProps(source, keyword, R_USERTAG, 'tag'),
+      () => filterItemByProps(source, keyword, 'username')
+    ]
+    for (const get of gets) {
+      const result = get()
+      if (result) return result
+    }
+  } else if (fallback) {
+    return [fallback]
   }
+}
 
-  throw new Error('User with that keyword could not be found!')
+exports.getMemberThenUser = (guild, keyword, fallback) => {
+  if (keyword) {
+    const gets = [
+      () => {
+        if (guild) {
+          const member = this.getGuildMember(guild, keyword)
+          if (member) return member.map(m => m.user)
+        }
+      },
+      () => this.getUser(keyword)
+    ]
+    for (const get of gets) {
+      const result = get()
+      if (result) return result
+    }
+  } else if (fallback) {
+    return [fallback]
+  }
 }
 
 exports.getGuildRole = (guild, keyword) => {
-  if (!(guild instanceof Discord.Guild)) {
-    throw new Error('An instance of Discord.Guild is required!')
-  }
-
-  keyword = keyword.trim()
-
-  const execMention = /<@&?(\d+?)>/g.exec(keyword)
-  if (execMention) {
-    const get = guild.roles.get(execMention[1])
-    if (get) {
-      // 2nd element in array is an indicator that the keyword was a mention
-      return [get, true]
+  const source = guild.roles
+  const gets = [
+    () => getItemByRegex(source, keyword, R_ROLE),
+    () => getItemById(source, keyword, R_ID),
+    () => getItemByProps(source, keyword, false, 'name'),
+    () => filterItemByProps(source, keyword, 'name')
+  ]
+  for (const get of gets) {
+    const result = get()
+    if (result) {
+      return result
     }
-  }
-
-  const testId = /^\d+$/.test(keyword)
-  if (testId) {
-    const get = guild.roles.get(keyword)
-    if (get) {
-      return [get, false]
-    }
-  }
-
-  const find = guild.roles.find(r => r.name === keyword)
-  if (find) {
-    return [find, false]
-  }
-
-  const regex = new RegExp(keyword, 'i')
-  const filter = guild.roles.filter(r => regex.test(r.name))
-  if (filter.size === 1) {
-    return [filter.first(), false]
-  } else if (filter.size !== 0) {
-    throw formatFoundList(filter, 'name', 'guild role')
-  }
-
-  throw new Error('Guild role with that keyword could not be found!')
-}
-
-exports.getGuild = (keyword, suppress) => {
-  keyword = keyword.trim()
-
-  const testId = /^\d+$/.test(keyword)
-  if (testId) {
-    const get = bot.guilds.get(keyword)
-    if (get) return get
-  }
-
-  const find = bot.guilds.find(g => g.name === keyword)
-  if (find) return find
-
-  const regex = new RegExp(keyword, 'i')
-  const filter = bot.guilds.filter(g => regex.test(g.name))
-  if (filter.size === 1) {
-    return filter.first()
-  } else if (filter.size !== 0) {
-    throw formatFoundList(filter, 'name', 'guild')
-  }
-
-  if (!suppress) {
-    throw new Error('Guild with that keyword could not be found!')
   }
 }
 
-exports.getChannel = (keyword, guild, strict = false) => {
-  if (!keyword) return false
-
-  keyword = keyword.trim()
-
-  const testId = /^\d+$/.test(keyword)
-  if (testId) {
-    const get = bot.channels.get(keyword)
-    if (get) return get
+exports.getGuild = keyword => {
+  const source = bot.guilds
+  const gets = [
+    () => getItemById(source, keyword, R_ID),
+    () => getItemByProps(source, keyword, false, 'name'),
+    () => filterItemByProps(source, keyword, 'name')
+  ]
+  for (const get of gets) {
+    const result = get()
+    if (result) {
+      return result
+    }
   }
+}
 
-  const testMatch = keyword.match(/^<#(\d+?)>$/)
-  if (testMatch) {
-    const get = bot.channels.get(testMatch[1])
-    if (get) return get
-  }
-
-  if (guild) {
-    const find = guild.channels.find(c => c.name === keyword)
-    if (find) return find
-
-    const regex = new RegExp(keyword, 'i')
-    const filter = guild.channels.filter(c => regex.test(c.name))
-    if (filter.size === 1) {
-      return filter.first()
-    } else if (filter.size !== 0) {
-      throw formatFoundList(filter, 'name', 'guild channel')
+exports.getChannel = (keyword, guild, dm) => {
+  const source = bot.channels
+  const gets = [
+    () => getItemById(source, keyword, R_ID),
+    () => guild && getItemByRegex(guild.channels, keyword, R_CHANNEL),
+    () => guild && getItemByProps(guild.channels, keyword, false, 'name'),
+    () => guild && filterItemByProps(guild.channels, keyword, 'name')
+  ]
+  for (const get of gets) {
+    const result = get()
+    if (result) {
+      return result
     }
   }
 
-  if (!guild || !strict) {
-    const channels = bot.channels.filter(c => c.type === 'dm')
-
-    const testId = /^\d+$/.test(keyword)
-    if (testId) {
-      const get = channels.get(keyword)
-      if (get) return get
-    }
-
-    const testTag = /#\d{4}$/.test(keyword)
-    if (testTag) {
-      const find = channels.get(c => c.recipient && c.recipient.tag && regex.test(c.recipient.tag))
-      if (find) return find
-    }
-
-    const find = channels.find(c => c.recpient && c.recipient.username === keyword)
-    if (find) return find
-
-    const regex = new RegExp(keyword, 'i')
-    const filter = channels.filter(c => c.recipient && c.recipient.username && regex.test(c.recipient.username))
-    if (filter.size === 1) {
-      return filter.first()
-    } else if (filter.size !== 0) {
-      throw formatFoundList(filter, 'recipient.tag', 'DM channel')
+  if (dm) {
+    const dmChannels = bot.channels.filter(c => c.type === 'dm')
+    if (dmChannels.size) {
+      const gets = [
+        () => getItemById(dmChannels, keyword, R_ID),
+        () => getItemByProps(dmChannels, keyword, R_ID, 'recipient.id'),
+        () => getItemByProps(dmChannels, keyword, R_USERTAG, 'recipient.tag'),
+        () => getItemByProps(dmChannels, keyword, false, 'recipient.username'),
+        () => filterItemByProps(dmChannels, keyword, 'recipient.username')
+      ]
+      for (const get of gets) {
+        const result = get()
+        if (result) {
+          return result
+        }
+      }
     }
   }
+}
 
-  throw new Error('Channel with that keyword could not be found!')
+exports.assertGetResult = (result, options = {}) => {
+  if (!result || !result.length) {
+    throw new Error('No matches found!')
+  } else if (result.length > 1) {
+    throw new Error(this.formatFoundList(result, 'name', options))
+  }
 }
 
 exports.pad = (pad, str, padLeft) => {

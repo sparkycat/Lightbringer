@@ -2,7 +2,7 @@ exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['k'])
   parsed.split = parsed.leftover.join(' ').replace(/(<:\w+?:\d+?>)/g, '|$1|').split('|')
 
-  if (parsed.split.length < 1) {
+  if (!parsed.split.length) {
     return msg.error('You must enter at least one emoji!')
   }
 

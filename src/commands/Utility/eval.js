@@ -4,7 +4,7 @@ const Discord = require('discord.js') // eslint-disable-line no-unused-vars
 exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['nb', 'g', 'd:', 's'])
 
-  if (parsed.leftover.length < 1) {
+  if (!parsed.leftover.length) {
     return msg.error('You must provide a command to run!')
   }
 
@@ -22,6 +22,15 @@ exports.run = async (bot, msg, args) => {
 
   const beginTime = process.hrtime()
 
+  msg.channel._send = msg.channel.send
+  msg.channel.send = (...args) => {
+    if (new RegExp(`^\\s*?${bot.config.prefix}${this.info.name}`, 'i').test(args[0])) {
+      return msg.channel._send(`${consts.e}Sending a new message which can trigger the \`${this.info.name}\` command itself is not allowed!`)
+    } else {
+      return msg.channel._send(...args)
+    }
+  }
+
   let result
   try {
     const evaled = await eval(input) // eslint-disable-line no-eval
@@ -35,6 +44,9 @@ exports.run = async (bot, msg, args) => {
       err
     }
   }
+
+  msg.channel.send = msg.channel._send
+  delete msg.channel._send
 
   const elapsedTime = process.hrtime(beginTime)
   const elapsedTimeNs = elapsedTime[0] * 1e9 + elapsedTime[1]

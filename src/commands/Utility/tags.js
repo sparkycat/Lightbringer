@@ -9,7 +9,7 @@ exports.init = async bot => {
 exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['e', 'v'])
 
-  if (parsed.leftover.length < 1) {
+  if (!parsed.leftover.length) {
     return msg.error('That action is not valid!')
   }
 
@@ -22,7 +22,7 @@ exports.run = async (bot, msg, args) => {
 
     const tags = this.storage.values.sort((a, b) => b.used - a.used)
 
-    if (tags.length < 1) {
+    if (!tags.length) {
       return msg.error('You have no tags!')
     }
 

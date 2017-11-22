@@ -10,7 +10,7 @@ exports.run = async (bot, msg, args) => {
     if (/^l(ist)?$/i.test(args[0])) {
       const mentions = this.storage.keys
 
-      if (mentions.length < 1) {
+      if (!mentions.length) {
         return msg.error('You are not logging mentions from any guilds!')
       }
 

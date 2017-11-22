@@ -1,7 +1,7 @@
 exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, 'd:')
 
-  if (parsed.leftover.length < 1) {
+  if (!parsed.leftover.length) {
     return msg.error('Please provide some emojis to use!')
   }
 

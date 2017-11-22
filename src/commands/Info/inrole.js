@@ -1,27 +1,39 @@
 exports.run = async (bot, msg, args) => {
-  if (!msg.guild) {
-    return msg.error('This command can only be used in a guild!')
+  const parsed = bot.utils.parseArgs(args, ['r', 'o', 'f:'])
+
+  if (!msg.guild && !parsed.options.f) {
+    return msg.error('This command must be used in a guild unless you specify a guild with the `-f` option!')
   }
 
   if (!bot.utils.hasEmbedPermission(msg.channel)) {
     return msg.error('No permission to use embed in this channel!')
   }
 
-  const parsed = bot.utils.parseArgs(args, ['r', 'o', 'f:'])
-
-  if (parsed.leftover.length < 1) {
+  if (!parsed.leftover.length) {
     return msg.error('You must specify a role name!')
   }
 
   const keyword = parsed.leftover.join(' ')
-  const guild = parsed.options.f ? bot.utils.getGuild(parsed.options.f) : msg.guild
-  const get = bot.utils.getGuildRole(guild, keyword)
-  const role = get[0]
-  const mention = get[1]
 
-  await msg.edit(`${consts.p}Fetching information\u2026`)
+  let guild = msg.guild
+  if (parsed.options.f) {
+    guild = bot.utils.getGuild(parsed.options.f)
+    try {
+      bot.utils.assertGetResult(guild, { name: 'guilds' })
+      guild = guild[0]
+    } catch (err) { return msg.error(err) }
+  }
+
+  let role = bot.utils.getGuildRole(guild, keyword)
+  try {
+    bot.utils.assertGetResult(role, { name: 'roles' })
+    role = role[0]
+  } catch (err) { return msg.error(err) }
+
+  const mention = bot.utils.isKeywordMentionable(keyword, 1)
 
   if (parsed.options.r) {
+    await msg.edit(`${consts.p}Fetching guild members\u2026`)
     await guild.members.fetch()
   }
 
@@ -29,7 +41,7 @@ exports.run = async (bot, msg, args) => {
 
   if (parsed.options.o) {
     members = members.filter(m => {
-      return (m.user === bot.user ? bot.user.settings.status : m.user.presence.status) !== 'offline'
+      return (m.user.id === bot.user.id ? bot.user.settings.status : m.user.presence.status) !== 'offline'
     })
   }
 
@@ -40,8 +52,9 @@ exports.run = async (bot, msg, args) => {
 
   return msg.edit(message, {
     embed: bot.utils.formatEmbed(
-      `${role.name} (ID: ${role.id})`,
-      `**---**\n**Guild:** ${guild.name} (ID: ${guild.id})\n` +
+      role.name,
+      `**ID:** ${role.id}\n` +
+      `**Guild:** ${guild.name} (ID: ${guild.id})\n` +
       (membersMap.includes(bot.user.tag) ? '*You are a member of this role.*\n' : '') +
       bot.utils.formatCode(membersMap.join(', '), 'css'),
       [],
@@ -54,7 +67,7 @@ exports.run = async (bot, msg, args) => {
 
 exports.info = {
   name: 'inrole',
-  usage: 'inrole [-r] <role name>',
+  usage: 'inrole [options] <role name>',
   description: 'Shows a list of members which have the specified role',
   options: [
     {

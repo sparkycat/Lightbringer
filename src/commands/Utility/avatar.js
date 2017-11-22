@@ -7,10 +7,23 @@ exports.run = async (bot, msg, args) => {
 
   const keyword = parsed.leftover.join(' ')
 
-  const get = await bot.utils.getUser(msg.guild, keyword, msg.author).catch(err => msg.error(err, 16000))
-  const user = get[0]
-  const member = msg.guild ? msg.guild.member(user) : null
-  const mention = get[1]
+  if (msg.guild) {
+    await msg.edit(`${consts.p}Updating guild members information\u2026`)
+    await msg.guild.members.fetch()
+  }
+
+  let user = bot.utils.getMemberThenUser(msg.guild, keyword, msg.author)
+
+  if (!user || !user.length) {
+    return msg.error('No matches found!')
+  } else if (user.length > 1) {
+    return msg.error(bot.utils.formatFoundList(user, 'tag', { name: 'members' }), 30000)
+  } else {
+    user = user[0]
+  }
+
+  const member = msg.guild && msg.guild.member(user)
+  const mention = bot.utils.isKeywordMentionable(keyword)
 
   let avatarURL = user.displayAvatarURL({ size: 2048 })
 
@@ -30,14 +43,17 @@ exports.run = async (bot, msg, args) => {
     ? 'My avatar:'
     : (mention ? `${user}'s avatar:` : `Avatar of the user which matched the keyword \`${keyword}\`:`)
   const description = `[Click here to view in a browser](${avatarURL})`
-  const append = `${member || !msg.guild ? '' : '\n*This user is not a member of the current guild.*'}`
+
+  let append = ''
+  if (msg.guild && !member) {
+    append = '\n*This user is not a member of the current guild.*'
+  }
 
   if (parsed.options.ne) {
     return msg.edit(`${mention ? user : user.tag}'s avatar:\n${avatarURL}\n${append}`)
   } else {
     return msg.edit(message, {
-      embed:
-      bot.utils.embed(user.tag, description + append, [], {
+      embed: bot.utils.embed(user.tag, description + append, [], {
         color: member ? member.displayColor : 0,
         image: avatarURL
       })

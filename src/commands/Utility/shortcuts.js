@@ -9,14 +9,14 @@ exports.init = async bot => {
 exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['v'])
 
-  if (parsed.leftover.length < 1) {
+  if (!parsed.leftover.length) {
     if (!bot.utils.hasEmbedPermission(msg.channel)) {
       return msg.error('No permission to use embed in this channel!')
     }
 
     const shortcuts = this.storage.values
 
-    if (shortcuts.length < 1) {
+    if (!shortcuts.length) {
       return msg.error('You have no shortcuts!')
     }
 

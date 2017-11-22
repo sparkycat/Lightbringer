@@ -7,7 +7,7 @@ exports.run = async (bot, msg, args) => {
 
   const parsed = bot.utils.parseArgs(args, ['v'])
 
-  if (parsed.leftover.length < 1) {
+  if (!parsed.leftover.length) {
     return msg.error('You must specify something to search!')
   }
 

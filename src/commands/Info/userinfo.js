@@ -8,12 +8,23 @@ exports.run = async (bot, msg, args) => {
   const parsed = bot.utils.parseArgs(args, ['m'])
   const keyword = parsed.leftover.join(' ')
 
-  await msg.edit(`${consts.p}Fetching information\u2026`)
+  if (msg.guild) {
+    await msg.edit(`${consts.p}Updating guild members information\u2026`)
+    await msg.guild.members.fetch()
+  }
 
-  const get = await bot.utils.getUser(msg.guild, keyword, msg.author).catch(err => msg.error(err, 16000))
-  const user = get[0]
-  const member = msg.guild ? msg.guild.member(user) : null
-  const mention = get[1]
+  let user = bot.utils.getMemberThenUser(msg.guild, keyword, msg.author)
+
+  if (!user || !user.length) {
+    return msg.error('No matches found!')
+  } else if (user.length > 1) {
+    return msg.error(bot.utils.formatFoundList(user, 'tag', { name: 'members' }), 30000)
+  } else {
+    user = user[0]
+  }
+
+  const member = msg.guild && msg.guild.member(user)
+  const mention = bot.utils.isKeywordMentionable(keyword)
 
   if (parsed.options.m && user === bot.user) {
     return msg.error(`Use \`${bot.config.prefix}guilds\` command to if you want to list your own guilds!`)
@@ -24,7 +35,8 @@ exports.run = async (bot, msg, args) => {
     profile = await user.fetchProfile()
   } catch (err) {}
 
-  const avatarURL = user.displayAvatarURL({ size: 128 })
+  const avatarURL = user.displayAvatarURL({ size: 256 })
+
   if (parsed.options.m) {
     if (user.bot) {
       return msg.error('Can not get mutual guilds information from bot accounts!')
@@ -38,29 +50,25 @@ exports.run = async (bot, msg, args) => {
     const message = mention
       ? `List of mutual guilds with ${keyword}:`
       : `List of mutual guilds with the user which matched the keyword \`${keyword}\`:`
+
+    const mutualGuilds = profile.mutualGuilds
+      .sort((a, b) => a.position - b.position)
+      .map(g => g.name)
+      .join('\n')
+
     return msg.edit(message, {
-      embed: bot.utils.formatLargeEmbed('', `**Total:** ${profile.mutualGuilds.size}`,
-        {
-          delimeter: '\n',
-          children: profile.mutualGuilds.sort((a, b) => b.memberCount - a.memberCount).map(g => {
-            return `•\u2000**${g.name}** – ${g.memberCount} member${g.memberCount !== 1 ? 's' : ''}, ` +
-              `${g.channels.size} channel${g.channels.size ? 's' : ''}`
-          })
-        },
-        {
-          inline: false,
-          color: member ? member.displayColor : 0,
-          author: {
-            name: `Mutual guilds with ${user.tag}`,
-            icon: thumbAvatarURL
-          }
+      embed: bot.utils.embed('', mutualGuilds, [], {
+        color: member ? member.displayColor : 0,
+        author: {
+          name: `Mutual guilds with ${user.tag} [${profile.mutualGuilds.size}]`,
+          icon: thumbAvatarURL
         }
-      )
+      })
     })
   } else {
     const description = user.presence.activity
       ? (bot.utils.formatActivityType(user.presence.activity.type)) + ` **${user.presence.activity.name}**`
-      : `*${user === bot.user ? 'I don\'t have' : 'This user desn\'t have'} activity message\u2026*`
+      : `*${user === bot.user ? 'I don\'t have' : 'This user doesn\'t have'} activity message\u2026*`
 
     const nestedFields = [
       {
@@ -72,7 +80,7 @@ exports.run = async (bot, msg, args) => {
           },
           {
             name: 'Status',
-            value: user !== bot.user ? user.presence.status : bot.user.settings.status
+            value: user.id === bot.user.id ? bot.user.settings.status : user.presence.status
           },
           {
             name: 'Created',
@@ -132,14 +140,22 @@ exports.run = async (bot, msg, args) => {
       })
 
       nestedFields.push([`Guild Roles [${roles.length}]`, roles.length ? roles.join(', ') : 'N/A'])
-    } else {
+    } else if (msg.guild) {
       nestedFields.push(['Guild Membership', '*This user is not a member of the currently viewed guild\u2026*'])
     }
 
-    const thumbAvatarURL = avatarURL.replace(/\?size=\d+?$/i, '')
-    const message = !keyword.length
-      ? 'My information:'
-      : (mention ? `${keyword}'s information:` : `Information of the user which matched the keyword \`${keyword}\`:`)
+    // const thumbAvatarURL = avatarURL.replace(/\?size=\d+?$/i, '')
+    const thumbAvatarURL = avatarURL
+
+    let message = 'My information:'
+    if (keyword) {
+      if (mention) {
+        message = `${keyword}'s information:`
+      } else {
+        message = `Information of the user which matched the keyword \`${keyword}\`:`
+      }
+    }
+
     return msg.edit(message, {
       embed: bot.utils.formatEmbed('', description, nestedFields, {
         thumbnail: thumbAvatarURL,

@@ -56,7 +56,7 @@ exports.init = async bot => {
 }
 
 exports.run = async (bot, msg, args) => {
-  if (templates.length < 1) {
+  if (!templates.length) {
     return msg.error('The memes haven\'t loaded yet!')
   }
 

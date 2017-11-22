@@ -1,7 +1,7 @@
 const snekfetch = require('snekfetch')
 
 exports.run = async (bot, msg) => {
-  if (msg.mentions.users.size < 1) {
+  if (!msg.mentions.users.size) {
     return msg.error('@mention someone to kiss!')
   }
 
