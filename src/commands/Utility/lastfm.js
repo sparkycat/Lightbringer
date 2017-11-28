@@ -75,7 +75,8 @@ const setPresenceAssets = async (artist, trackName, song) => {
     return bot.user.setPresence({
       activity: {
         application: rich.clientId,
-        name: song,
+        // name: song,
+        name: trackName,
         type: 'LISTENING',
         details: trackName,
         state: artist,

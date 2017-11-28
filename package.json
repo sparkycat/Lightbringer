@@ -1,16 +1,17 @@
 {
   "name": "lightbringer",
-  "version": "1.3.0-discord.js-master",
+  "version": "1.4.0",
   "description": "Yet another Discord self-bot written with Discord.js",
   "author": "",
   "license": "MIT",
   "repository": "github:BobbyWibowo/Lightbringer",
   "bugs": "https://github.com/BobbyWibowo/Lightbringer/issues",
-  "main": "src/bot.js",
+  "main": "./src/bot.js",
   "scripts": {
-    "start": "node src/bot.js",
-    "background": "screen -dmS lb_dev node src/bot.js",
-    "pm2": "pm2 start --name lb_dev src/bot.js"
+    "start": "node ./src/bot.js",
+    "background": "screen -dmS lb_dev node ./src/bot.js",
+    "pm2": "pm2 start --name lb_dev ./src/bot.js",
+    "lint": "standard ./src"
   },
   "engines": {
     "node": ">=8.0.0"
