@@ -78,13 +78,13 @@ const setPresenceAssets = async (artist, trackName, song) => {
         // name: song,
         name: trackName,
         type: 'LISTENING',
-        details: trackName,
-        state: artist,
+        details: artist,
+        state: `Last.fm: ${this.config.username}`,
         assets: {
           largeImage: rich.largeImageId,
           smallImage: rich.smallImageId,
-          largeText: `${this.totalScrobbles.toLocaleString()} scrobbles`,
-          smallText: `(ID: ${this.config.username}) Last.fm status for Discord powered by Lightbringer`
+          largeText: `Scrobbles: ${this.totalScrobbles.toLocaleString()}`,
+          smallText: `Last.fm status powered by Lightbringer`
         }
       }
     })

@@ -11,7 +11,7 @@
     "start": "node ./src/bot.js",
     "background": "screen -dmS lb_dev node ./src/bot.js",
     "pm2": "pm2 start --name lb_dev ./src/bot.js",
-    "lint": "standard ./src"
+    "lint": "standard"
   },
   "engines": {
     "node": ">=8.0.0"
